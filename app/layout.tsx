@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   keywords: ["movies", "reviews", "AI", "movie recommendations", "film reviews"],
 };
 
+// Prevent static generation issues with SessionProvider
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: Readonly<{
