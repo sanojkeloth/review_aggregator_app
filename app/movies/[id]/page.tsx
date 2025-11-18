@@ -35,9 +35,9 @@ export default async function MovieDetailPage({
   }
 
   const latestSummary = movie.summaries[0]
-  const sentiment = latestSummary?.sentiment || "MIXED"
+  const sentiment: "POSITIVE" | "MIXED" | "NEGATIVE" = latestSummary?.sentiment || "MIXED"
 
-  const sentimentConfig = {
+  const sentimentConfig: Record<"POSITIVE" | "MIXED" | "NEGATIVE", { icon: any; color: string; bg: string; label: string }> = {
     POSITIVE: { icon: ThumbsUp, color: "text-green-600", bg: "bg-green-50", label: "Recommended" },
     NEGATIVE: { icon: ThumbsDown, color: "text-red-600", bg: "bg-red-50", label: "Not Recommended" },
     MIXED: { icon: Minus, color: "text-yellow-600", bg: "bg-yellow-50", label: "Mixed Reviews" },
