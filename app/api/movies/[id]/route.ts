@@ -23,7 +23,7 @@ const updateMovieSchema = z.object({
 // GET /api/movies/[id] - Get a specific movie
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -31,8 +31,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const movie = await prisma.movie.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         folder: true,
         createdBy: {
@@ -68,7 +69,7 @@ export async function GET(
 // PUT /api/movies/[id] - Update a movie
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -79,8 +80,9 @@ export async function PUT(
     const body = await request.json()
     const validatedData = updateMovieSchema.parse(body)
 
+    const { id } = await params
     const movie = await prisma.movie.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData,
       include: {
         folder: true,
@@ -109,7 +111,7 @@ export async function PUT(
 // DELETE /api/movies/[id] - Delete a movie
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -117,8 +119,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     await prisma.movie.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "Movie deleted successfully" })

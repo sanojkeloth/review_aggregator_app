@@ -12,7 +12,7 @@ const chatSchema = z.object({
 // POST /api/movies/[id]/chat - Refine summary with AI chat
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -23,9 +23,11 @@ export async function POST(
     const body = await request.json()
     const { message } = chatSchema.parse(body)
 
+    const { id } = await params
+
     // Get movie details
     const movie = await prisma.movie.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!movie) {
@@ -34,7 +36,7 @@ export async function POST(
 
     // Get latest summary
     const latestSummary = await prisma.summary.findFirst({
-      where: { movieId: params.id },
+      where: { movieId: id },
       orderBy: { version: "desc" },
     })
 
@@ -70,7 +72,7 @@ export async function POST(
     // Create new summary version
     const newSummary = await prisma.summary.create({
       data: {
-        movieId: params.id,
+        movieId: id,
         version: latestSummary.version + 1,
         summaryType: latestSummary.summaryType,
         overallConsensus: refinedSummary.overallConsensus,
@@ -87,7 +89,7 @@ export async function POST(
     // Save chat history
     await prisma.chatHistory.create({
       data: {
-        movieId: params.id,
+        movieId: id,
         userId: session.user.id,
         message,
         response: `Summary updated to version ${newSummary.version}`,
@@ -118,7 +120,7 @@ export async function POST(
 // GET /api/movies/[id]/chat - Get chat history
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -126,8 +128,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
+
     const chatHistory = await prisma.chatHistory.findMany({
-      where: { movieId: params.id },
+      where: { movieId: id },
       include: {
         user: {
           select: { name: true, email: true },

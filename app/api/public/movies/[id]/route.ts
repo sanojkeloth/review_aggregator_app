@@ -4,12 +4,14 @@ import { prisma } from "@/lib/prisma"
 // GET /api/public/movies/[id] - Get movie detail (no auth required)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
+
     const movie = await prisma.movie.findUnique({
       where: {
-        id: params.id,
+        id,
         status: "PUBLISHED", // Only show published movies
       },
       include: {
@@ -43,7 +45,7 @@ export async function GET(
     prisma.pageView
       .create({
         data: {
-          movieId: params.id,
+          movieId: id,
           userIp,
           userAgent,
         },

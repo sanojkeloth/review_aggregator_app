@@ -25,9 +25,10 @@ async function getMovie(id: string) {
 export default async function MovieDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const movie = await getMovie(params.id)
+  const { id } = await params
+  const movie = await getMovie(id)
 
   if (!movie) {
     notFound()

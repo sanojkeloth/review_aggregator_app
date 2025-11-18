@@ -13,7 +13,7 @@ const createReviewSchema = z.object({
 // GET /api/movies/[id]/reviews - Get all reviews for a movie
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -21,8 +21,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const reviews = await prisma.review.findMany({
-      where: { movieId: params.id },
+      where: { movieId: id },
       include: {
         addedBy: {
           select: { name: true, email: true },
@@ -44,7 +45,7 @@ export async function GET(
 // POST /api/movies/[id]/reviews - Add a review link
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -55,9 +56,11 @@ export async function POST(
     const body = await request.json()
     const validatedData = createReviewSchema.parse(body)
 
+    const { id } = await params
+
     // Check if movie exists
     const movie = await prisma.movie.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!movie) {
@@ -66,7 +69,7 @@ export async function POST(
 
     const review = await prisma.review.create({
       data: {
-        movieId: params.id,
+        movieId: id,
         addedById: session.user.id,
         ...validatedData,
       },

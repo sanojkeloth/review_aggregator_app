@@ -8,7 +8,7 @@ import { extractContent } from "@/lib/extractors"
 // POST /api/movies/[id]/summarize - Generate AI summary
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -16,9 +16,11 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
+
     // Get movie details
     const movie = await prisma.movie.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         reviews: true,
       },
@@ -72,7 +74,7 @@ export async function POST(
     // Get all processed reviews
     const processedReviews = await prisma.review.findMany({
       where: {
-        movieId: params.id,
+        movieId: id,
         status: "PROCESSED",
         contentExtracted: { not: null },
       },
@@ -99,7 +101,7 @@ export async function POST(
 
     // Get the latest version number
     const latestSummary = await prisma.summary.findFirst({
-      where: { movieId: params.id },
+      where: { movieId: id },
       orderBy: { version: "desc" },
     })
 
@@ -108,7 +110,7 @@ export async function POST(
     // Save summary to database
     const summary = await prisma.summary.create({
       data: {
-        movieId: params.id,
+        movieId: id,
         version: newVersion,
         summaryType: "DETAILED",
         overallConsensus: summaryData.overallConsensus,
