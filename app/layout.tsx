@@ -1,0 +1,29 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import SessionProvider from "@/components/providers/SessionProvider";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+export const metadata: Metadata = {
+  title: "MovieReview AI - AI-Powered Movie Reviews",
+  description: "Find your next movie with AI-aggregated reviews from trusted sources. Make informed decisions in seconds.",
+  keywords: ["movies", "reviews", "AI", "movie recommendations", "film reviews"],
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <SessionProvider>{children}</SessionProvider>
+      </body>
+    </html>
+  );
+}

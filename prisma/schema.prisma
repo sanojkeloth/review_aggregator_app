@@ -1,0 +1,233 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for admin/content managers
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  googleId      String?   @unique
+  role          UserRole  @default(EDITOR)
+  createdAt     DateTime  @default(now())
+  lastLogin     DateTime?
+
+  accounts      Account[]
+  sessions      Session[]
+  movies        Movie[]
+  reviews       Review[]
+  chatHistory   ChatHistory[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// NextAuth Account model
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// NextAuth Session model
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// NextAuth VerificationToken model
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Folder model for organizing movies
+model Folder {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent      Folder?  @relation("FolderToFolder", fields: [parentId], references: [id])
+  children    Folder[] @relation("FolderToFolder")
+  movies      Movie[]
+
+  @@map("folders")
+}
+
+// Movie model
+model Movie {
+  id           String       @id @default(cuid())
+  title        String
+  releaseYear  Int
+  genre        String[]
+  director     String?
+  cast         String[]
+  duration     Int?         // in minutes
+  language     String[]
+  posterUrl    String?
+  trailerUrl   String?
+  imdbRating   Float?
+  rtRating     Float?
+  status       MovieStatus  @default(DRAFT)
+  folderId     String?
+  createdById  String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  folder       Folder?      @relation(fields: [folderId], references: [id])
+  createdBy    User         @relation(fields: [createdById], references: [id])
+  reviews      Review[]
+  summaries    Summary[]
+  chatHistory  ChatHistory[]
+  pageViews    PageView[]
+
+  @@map("movies")
+}
+
+enum MovieStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// Review model
+model Review {
+  id               String       @id @default(cuid())
+  movieId          String
+  sourceUrl        String
+  sourceType       SourceType
+  sourceName       String?
+  contentExtracted String?      @db.Text
+  status           ReviewStatus @default(PENDING)
+  errorMessage     String?
+  addedById        String
+  processedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  movie            Movie        @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  addedBy          User         @relation(fields: [addedById], references: [id])
+
+  @@map("reviews")
+}
+
+enum SourceType {
+  YOUTUBE
+  INSTAGRAM
+  ARTICLE
+  BLOG
+  WEBSITE
+  PDF
+  OTHER
+}
+
+enum ReviewStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+// Summary model
+model Summary {
+  id                String      @id @default(cuid())
+  movieId           String
+  version           Int         @default(1)
+  summaryType       SummaryType @default(DETAILED)
+  overallConsensus  String      @db.Text
+  strengths         String[]
+  weaknesses        String[]
+  highlights        String[]
+  recommendation    String
+  sentiment         Sentiment
+  sourceBreakdown   Json        // {positive: 10, mixed: 3, negative: 1}
+  createdById       String
+  createdAt         DateTime    @default(now())
+
+  movie             Movie       @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@map("summaries")
+}
+
+enum SummaryType {
+  SHORT
+  DETAILED
+  SPOILER_FREE
+}
+
+enum Sentiment {
+  POSITIVE
+  MIXED
+  NEGATIVE
+}
+
+// Chat History for AI refinement
+model ChatHistory {
+  id                    String   @id @default(cuid())
+  movieId               String
+  userId                String
+  message               String   @db.Text
+  response              String   @db.Text
+  summaryVersionBefore  Int?
+  summaryVersionAfter   Int?
+  createdAt             DateTime @default(now())
+
+  movie                 Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  user                  User     @relation(fields: [userId], references: [id])
+
+  @@map("chat_history")
+}
+
+// Page Views for analytics
+model PageView {
+  id        String   @id @default(cuid())
+  movieId   String
+  userIp    String?
+  userAgent String?
+  viewedAt  DateTime @default(now())
+
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+
+  @@map("page_views")
+}
