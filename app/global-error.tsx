@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic';
+
 export default function GlobalError({
   error,
   reset,
@@ -8,7 +10,7 @@ export default function GlobalError({
   reset: () => void
 }) {
   return (
-    <html>
+    <html suppressHydrationWarning>
       <body>
         <div style={{ padding: "20px", fontFamily: "system-ui" }}>
           <h2>Something went wrong!</h2>
