@@ -1,25 +1,25 @@
 "use client"
 
-import { SessionProvider as NextAuthSessionProvider } from "next-auth/react"
+import dynamic from "next/dynamic"
 import { ReactNode } from "react"
+
+// Dynamically import the actual SessionProvider with ssr disabled
+// This prevents it from being evaluated during build/SSR
+const ClientSessionProvider = dynamic(
+  () => import("./ClientSessionProvider"),
+  { ssr: false }
+)
 
 export default function SessionProvider({
   children,
 }: {
   children: ReactNode
 }) {
-  // Skip SessionProvider during SSR/build to prevent context errors
+  // During SSR, just return children
   if (typeof window === "undefined") {
     return <>{children}</>
   }
 
-  // Only use SessionProvider on client side
-  return (
-    <NextAuthSessionProvider
-      refetchInterval={0}
-      refetchOnWindowFocus={false}
-    >
-      {children}
-    </NextAuthSessionProvider>
-  )
+  // On client side, use the dynamically imported provider
+  return <ClientSessionProvider>{children}</ClientSessionProvider>
 }
