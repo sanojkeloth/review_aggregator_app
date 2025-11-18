@@ -5,8 +5,11 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  // Disable static optimization to prevent SSR issues with SessionProvider
   output: 'standalone',
+  // Cache bust: v2
+  generateBuildId: async () => {
+    return 'build-' + Date.now()
+  },
 }
 
 module.exports = nextConfig

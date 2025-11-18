@@ -5,8 +5,8 @@ nixPkgs = ["nodejs_20", "openssl"]
 cmds = ["npm ci"]
 
 [phases.build]
-cmds = ["rm -rf .next", "npm run build"]
-env = { SKIP_ENV_VALIDATION = "1" }
+cmds = ["npm run build"]
+env = { SKIP_ENV_VALIDATION = "1", NODE_ENV = "production" }
 
 [start]
 cmd = "npm start"
