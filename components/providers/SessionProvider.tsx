@@ -1,25 +1,19 @@
 "use client"
 
 import { SessionProvider as NextAuthSessionProvider } from "next-auth/react"
-import { ReactNode, useEffect, useState } from "react"
+import { ReactNode } from "react"
 
 export default function SessionProvider({
   children,
 }: {
   children: ReactNode
 }) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // During SSR and initial render, just return children without SessionProvider
-  if (!mounted) {
+  // Skip SessionProvider during SSR/build to prevent context errors
+  if (typeof window === "undefined") {
     return <>{children}</>
   }
 
-  // Only render SessionProvider on client side after mount
+  // Only use SessionProvider on client side
   return (
     <NextAuthSessionProvider
       refetchInterval={0}
