@@ -1,25 +1,44 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import MovieCard from "./MovieCard"
 
-async function getMovies() {
-  try {
-    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-    const res = await fetch(`${baseUrl}/api/public/movies?limit=12`, {
-      cache: "no-store",
-    })
+export default function MovieGrid() {
+  const [movies, setMovies] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch movies")
+  useEffect(() => {
+    async function fetchMovies() {
+      try {
+        const res = await fetch("/api/public/movies?limit=12", {
+          cache: "no-store",
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          setMovies(data.movies || [])
+        }
+      } catch (error) {
+        console.error("Error fetching movies:", error)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    return res.json()
-  } catch (error) {
-    console.error("Error fetching movies:", error)
-    return { movies: [], pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } }
-  }
-}
+    fetchMovies()
+  }, [])
 
-export default async function MovieGrid() {
-  const { movies } = await getMovies()
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {[...Array(8)].map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="bg-neutral-200 dark:bg-neutral-800 h-96 rounded-lg"></div>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   if (movies.length === 0) {
     return (
