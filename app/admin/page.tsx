@@ -5,6 +5,9 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Film, Plus, Search, LogOut } from "lucide-react"
 
+// Prevent static generation for this page since it requires SessionProvider
+export const dynamic = 'force-dynamic'
+
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const [movies, setMovies] = useState<any[]>([])
